@@ -66,5 +66,4 @@ main() {
 	create_full_report "$txt"
 }
 
-# main "$@"
-main report.pdf
+main "$@"
