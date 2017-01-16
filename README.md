@@ -5,7 +5,7 @@
 Входным аргументом является отчет АС Ревизор в формтае .pdf. Пример использования
 
 ```
-./check_url_rkn.sh report.pdf > report.txt
+./check_url_rkn.sh report.csv > report.txt
 ```
 
 На выходе получаем таблицу
