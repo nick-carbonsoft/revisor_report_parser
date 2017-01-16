@@ -34,22 +34,38 @@ get_url_redirect() {
 	 awk -F ";" '{print $10}' "$file" | iconv -f cp1251 | sed 's/^С: //g' | sed -n '/Адрес перенаправления/,$p' | sed 1d
 }
 
+replace_url_redirect() {
+	local file1="$1"
+	local file2="$2"
+	local output="$TMPDIR/output"
+	for file in $file{1,2}; do
+			cat -n "$file" > "$file.enum"
+	done
+	join $file{1,2}.enum > "$output"
+	while read _ original replacement; do
+			[ -n "$replacement" ] && echo "$replacement" || echo "$original"
+	done < "$output"
+	rm -f $output $file{1,2}.enum
+}
+
 create_full_report() {
 	local file="$1"
-	local ip=$TMPDIR/ip
-	local url=$TMPDIR/url
-	local datetime=$TMPDIR/datetime
-	local url_redirect=$TMPDIR/url_redirect
-
+	local ip="$TMPDIR/ip"
+	local url="$TMPDIR/url"
+	local datetime="$TMPDIR/datetime"
+	local url_redirect="$TMPDIR/url_redirect"
+	local all_url="$TMPDIR/all_url"
 	get_datetime "$file" > $datetime
 	get_url_and_domain_list "$file" > $url
 	get_ip_list "$file"  > $ip
-	get_url_redirect "$file" > $url_redirect
-	paste $datetime $ip $url $url_redirect
-	rm -f $datetime $ip $url
+	get_url_redirect "$file" > "$url_redirect"
+	replace_url_redirect "$url" "$url_redirect" > "$all_url"
+	paste "$datetime" "$ip" "$all_url"
+	rm -f "$datetime" "$ip" "$url" "$url_redirect" "$all_url"
 }
 
 check_args() {
+	local extension=${1##*.}
 	if [ "$#" -lt 1 ]; then
 		echo "Usage $0 <file.csv>"
 		exit 1
@@ -58,6 +74,10 @@ check_args() {
 	if [ ! -s "$1" ]; then
 		echo "Empty $1"
 		exit 2
+	fi
+	if [ $extension != "*.csv" ]; then
+		echo "Only <file.csv> format, we use $1"
+		exit 3
 	fi
 }
 
