@@ -75,7 +75,7 @@ check_args() {
 		echo "Empty $1"
 		exit 2
 	fi
-	if [ $extension != "*.csv" ]; then
+	if [ $extension != "csv" ]; then
 		echo "Only <file.csv> format, we use $1"
 		exit 3
 	fi
