@@ -14,36 +14,37 @@ prepare() {
 get_datetime() {
 	local file="$1"
 	local date_regex='[0-9]{2} [а-яА-Я]{3}, [0-9]{4}  [0-9]{2}:[0-9]{2}:[0-9]{2}'
-	cut -f1-2 "$file" | iconv -f cp1251 | egrep -o "$date_regex" | sed 1d | sed '$!N;s/\n/ /'
+	cut -f1-2 "$file" | iconv -f cp1251 | egrep -o "$date_regex" | sed 1d | sed '$!N;s/\n/ /' || break
 }
 
 get_url_and_domain_list() {
 	local file="$1"
 	local url_regex="http(s?):\/\/[^ \"\(\)\<\>]*"
-	awk -F ";" '{print $6}' "$file" | egrep -o "$url_regex" |  cut -d ',' -f1
+	awk -F ";" '{print $6}' "$file" | egrep -o "$url_regex" |  cut -d ',' -f1 || break
 }
 
 get_ip_list() {
 	local file="$1"
 	local ip_regex="([0-9]{1,3}\.){3}[0-9]{1,3}"
-	awk -F "," '{print $6}' "$file" | egrep -o "$ip_regex"
+	awk -F "," '{print $6}' "$file" | egrep -o "$ip_regex" || break
 }
 
 get_url_redirect() {
 	local file="$1"
-	 awk -F ";" '{print $10}' "$file" | iconv -f cp1251 | sed 's/^С: //g' | sed -n '/Адрес перенаправления/,$p' | sed 1d
+	awk -F ";" '{print $10}' "$file" | iconv -f cp1251 | sed 's/^С: //g' | sed -n '/Адрес перенаправления/,$p' | sed 1d || break
 }
 
 replace_url_redirect() {
 	local file1="$1"
 	local file2="$2"
 	local output="$TMPDIR/output"
+	[[ -s $file{1,2} ]] || break
 	for file in $file{1,2}; do
-			cat -n "$file" > "$file.enum"
+		cat -n "$file" > "$file.enum"
 	done
 	join $file{1,2}.enum > "$output"
 	while read _ original replacement; do
-			[ -n "$replacement" ] && echo "$replacement" || echo "$original"
+		[ -n "$replacement" ] && echo "$replacement" || echo "$original"
 	done < "$output"
 	rm -f $output $file{1,2}.enum
 }
@@ -60,8 +61,12 @@ create_full_report() {
 	get_ip_list "$file"  > $ip
 	get_url_redirect "$file" > "$url_redirect"
 	replace_url_redirect "$url" "$url_redirect" > "$all_url"
-	paste "$datetime" "$ip" "$all_url"
-	rm -f "$datetime" "$ip" "$url" "$url_redirect" "$all_url"
+	if [[ -s "$ip" ]]; then
+		paste "$datetime" "$ip" "$all_url"
+		rm -f "$datetime" "$ip" "$url" "$url_redirect" "$all_url"
+	fi
+	paste "$datetime" "$all_url"
+	rm -f "$datetime" "$url" "$url_redirect" "$all_url"
 }
 
 check_args() {
