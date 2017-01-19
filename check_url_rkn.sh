@@ -38,7 +38,7 @@ replace_url_redirect() {
 	local file1="$1"
 	local file2="$2"
 	local output="$TMPDIR/output"
-	[[ -s $file{1,2} ]] || break
+	#[[ -s $file{1,2} ]] || break
 	for file in $file{1,2}; do
 		cat -n "$file" > "$file.enum"
 	done
@@ -64,9 +64,11 @@ create_full_report() {
 	if [[ -s "$ip" ]]; then
 		paste "$datetime" "$ip" "$all_url"
 		rm -f "$datetime" "$ip" "$url" "$url_redirect" "$all_url"
+	else
+		paste "$datetime" "$all_url"
+		rm -f "$datetime" "$url" "$url_redirect" "$all_url"
+
 	fi
-	paste "$datetime" "$all_url"
-	rm -f "$datetime" "$url" "$url_redirect" "$all_url"
 }
 
 check_args() {
