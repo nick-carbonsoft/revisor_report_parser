@@ -34,6 +34,12 @@ get_url_redirect() {
 	awk -F ";" '{print $10}' "$file" | iconv -f cp1251 | sed 's/^С: //g' | sed -n '/Адрес перенаправления/,$p' | sed 1d || return 0
 }
 
+get_records_id() {
+    local file="$1"
+    local id_regexp=''
+    awk -F ";" '{print $5}' "$file" | iconv -f cp1251 | grep [0-9]
+}
+
 replace_url_redirect() {
 	local file1="$1"
 	local file2="$2"
@@ -55,17 +61,19 @@ create_full_report() {
 	local datetime="$TMPDIR/datetime"
 	local url_redirect="$TMPDIR/url_redirect"
 	local all_url="$TMPDIR/all_url"
+    local records_id="$TMPDIR/id"
 	get_datetime "$file" > $datetime
 	get_url_and_domain_list "$file" > $url
 	get_ip_list "$file"  > $ip
 	get_url_redirect "$file" > "$url_redirect"
+    get_records_id "$file" > "$records_id"
 	replace_url_redirect "$url" "$url_redirect" > "$all_url"
 	if [[ -s "$ip" ]]; then
-		paste "$datetime" "$ip" "$all_url"
-		rm -f "$datetime" "$ip" "$url" "$url_redirect" "$all_url"
+		paste "$datetime" "$records_id" "$ip" "$all_url"
+		rm -f "$datetime" "$records_id" "$ip" "$url" "$url_redirect" "$all_url"
 	else
-		paste "$datetime" "$all_url"
-		rm -f "$datetime" "$url" "$url_redirect" "$all_url"
+		paste "$datetime" "$records_id" "$all_url"
+		rm -f "$datetime" "$records_id" "$url" "$url_redirect" "$all_url"
 
 	fi
 }
